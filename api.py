@@ -34,9 +34,9 @@ class GaragePredictionData(BaseModel):
 @app.post("/train-note")
 async def train_note_model():
     global is_note_model_trained
-    df = pd.read_csv('biens.csv')
+    df = pd.read_csv('C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv')
     df['ville_encoded'] = df['ville'].astype('category').cat.codes
-    X = df[['surface', 'price', 'ville_encoded']]
+    X = df[['surface', 'prix', 'ville_encoded']]
     y = df['note']
     note_model.fit(X, y)
     is_note_model_trained = True
@@ -47,16 +47,28 @@ async def train_note_model():
 async def predict_note(data: NotePredictionData):
     if not is_note_model_trained:
         raise HTTPException(status_code=400, detail="Modèle non entraîné.")
-    ville_encoded = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[data.ville]
+    
+    ville_mapping = {'paris': 0, 'lyon': 1, 'marseille': 2}
+    
+    # Convertir la ville en minuscule et enlever les espaces blancs pour uniformiser
+    ville_clean = data.ville.strip().lower()
+    
+    # Vérification si la ville est présente dans le mapping
+    if ville_clean not in ville_mapping:
+        raise HTTPException(status_code=400, detail=f"Ville '{data.ville}' non supportée.")
+    
+    ville_encoded = ville_mapping[ville_clean]
     X_new = np.array([[data.surface, data.prix, ville_encoded]])
+    
     predicted_note = note_model.predict(X_new)[0]
     return {"predicted_note": predicted_note}
+
 
 # Entraînement du modèle de prédiction de l'année
 @app.post("/train-year")
 async def train_year_model():
     global is_year_model_trained
-    df = pd.read_csv('csv/biens.csv')
+    df = pd.read_csv('C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv')
     df['ville_encoded'] = df['ville'].astype('category').cat.codes
     X = df[['ville_encoded']]
     y = df['annee']
@@ -78,9 +90,9 @@ async def predict_year(data: YearPredictionData):
 @app.post("/train-garage")
 async def train_garage_model():
     global is_garage_model_trained
-    df = pd.read_csv('csv/biens.csv')
+    df = pd.read_csv('C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv')
     df['ville_encoded'] = df['ville'].astype('category').cat.codes
-    X = df[['price', 'ville_encoded']]
+    X = df[['prix', 'ville_encoded']]
     y = df['garage']
     garage_model.fit(X, y)
     is_garage_model_trained = True
