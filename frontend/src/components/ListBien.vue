@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 sm:px-6 lg:px-8">
+  <div class="mt-10 px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
         <h1 class="text-base font-semibold leading-6 text-gray-900">Users</h1>
@@ -48,4 +48,15 @@
 const people = [
   { name: 'Lindsay Walton', title: 'Front-end Developer', email: 'lindsay.walton@example.com', role: 'Member' },
 ]
+
+
+cconst response = await fetch('http://localhost:5001/train-note', {
+    method: 'POST',
+    body: JSON.stringify({
+      chambres: state.nbRooms,
+      surface: state.surface,
+      fenetres: state.nbWindows,
+      prix: state.price
+    })
+  })
 </script>
