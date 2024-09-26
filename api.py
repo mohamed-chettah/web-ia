@@ -4,6 +4,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 import uvicorn
 import numpy as np
 import pandas as pd
+from loguru import logger
 
 app = FastAPI()
 
@@ -48,7 +49,7 @@ async def predict_note(data: NotePredictionData):
     if not is_note_model_trained:
         raise HTTPException(status_code=400, detail="Modèle non entraîné.")
     
-    ville_mapping = {'paris': 0, 'lyon': 1, 'marseille': 2}
+    ville_mapping = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[data.ville]
     
     # Convertir la ville en minuscule et enlever les espaces blancs pour uniformiser
     ville_clean = data.ville.strip().lower()
@@ -81,8 +82,11 @@ async def train_year_model():
 async def predict_year(data: YearPredictionData):
     if not is_year_model_trained:
         raise HTTPException(status_code=400, detail="Modèle non entraîné.")
-    ville_encoded = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[data.ville]
-    X_new = np.array([[ville_encoded]])
+    
+    ville_clean = data.ville.strip().lower()
+    ville_mapping = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[ville_clean]
+
+    X_new = np.array([[ville_mapping]])
     predicted_year = year_model.predict(X_new)[0]
     return {"predicted_year": predicted_year}
 
