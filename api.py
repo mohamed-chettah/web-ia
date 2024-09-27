@@ -6,16 +6,12 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 from fastapi.middleware.cors import CORSMiddleware
-
+import os
 app = FastAPI()
-
-origins = [
-    "http://localhost:5173"
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -44,11 +40,69 @@ class GaragePredictionData(BaseModel):
     prix: float
     ville: str
 
+class Bien(BaseModel):
+    surface: float
+    prix: float
+    ville: str
+    note: float
+    annee: int
+    garage: bool
+
+CSV_FILE_PATH = 'C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv'
+
+# Récupérer la liste des biens
+@app.get("/biens", response_model=list[Bien])
+async def get_biens():
+    try:
+        df = pd.read_csv(CSV_FILE_PATH)
+        
+        # Conversion du dataframe en liste de dictionnaires
+        biens = df.to_dict(orient="records")
+        
+        # Retourner la liste des biens
+        return biens
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des biens: {e}")
+        raise HTTPException(status_code=500, detail="Erreur lors de la récupération des biens.")
+
+@app.post("/biens")
+async def add_bien(bien: Bien):
+    # Vérifier si le fichier CSV existe
+    file_exists = os.path.isfile(CSV_FILE_PATH)
+
+    try:
+        # Charger les données existantes s'il y en a
+        if file_exists:
+            df = pd.read_csv(CSV_FILE_PATH)
+        else:
+            # Créer un DataFrame vide avec les bonnes colonnes si le fichier n'existe pas
+            df = pd.DataFrame(columns=["surface", "prix", "ville", "note", "annee", "garage"])
+
+        # Ajouter le nouveau bien sous forme de dictionnaire
+        new_bien = pd.DataFrame([{
+            "surface": bien.surface,
+            "prix": bien.prix,
+            "ville": bien.ville,
+            "note": bien.note,
+            "annee": bien.annee,
+            "garage": bien.garage
+        }])
+
+        # Concaténer le nouveau bien au DataFrame
+        df = pd.concat([df, new_bien], ignore_index=True)
+
+        # Sauvegarder le DataFrame mis à jour dans le fichier CSV
+        df.to_csv(CSV_FILE_PATH, index=False)
+
+        return {"message": "Bien ajouté avec succès."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'ajout du bien: {e}")
+
 # Entraînement du modèle de prédiction de la note
 @app.post("/train-note")
 async def train_note_model():
     global is_note_model_trained
-    df = pd.read_csv('C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv')
+    df = pd.read_csv(CSV_FILE_PATH)
     df['ville_encoded'] = df['ville'].astype('category').cat.codes
     X = df[['surface', 'prix', 'ville_encoded']]
     y = df['note']
@@ -79,7 +133,7 @@ async def predict_note(data: NotePredictionData):
 @app.post("/train-year")
 async def train_year_model():
     global is_year_model_trained
-    df = pd.read_csv('C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv')
+    df = pd.read_csv(CSV_FILE_PATH)
     df['ville_encoded'] = df['ville'].astype('category').cat.codes
     X = df[['ville_encoded']]
     y = df['annee']
@@ -105,12 +159,11 @@ async def predict_year(data: YearPredictionData):
 
     return {"predicted_year": predicted_year}
 
-
 # Entraînement du modèle de prédiction du garage
 @app.post("/train-garage")
 async def train_garage_model():
     global is_garage_model_trained
-    df = pd.read_csv('C:/ESGI/derniere-annee/web-ia/web-ia/biens.csv')
+    df = pd.read_csv(CSV_FILE_PATH)
     df['ville_encoded'] = df['ville'].astype('category').cat.codes
     X = df[['prix', 'ville_encoded']]
     y = df['garage']
