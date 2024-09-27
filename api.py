@@ -96,7 +96,6 @@ async def predict_year(data: YearPredictionData):
     ville_clean = data.ville.strip().lower()
     ville_mapping = {'paris': 0, 'lyon': 1, 'marseille': 2}
 
-    X_new = np.array([[ville_mapping]])
     if ville_clean not in ville_mapping:
         raise HTTPException(status_code=400, detail=f"Ville '{data.ville}' non supportée.")
 
