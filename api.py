@@ -5,8 +5,21 @@ import uvicorn
 import numpy as np
 import pandas as pd
 from loguru import logger
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Modèles de prédiction
 note_model = LinearRegression()
@@ -48,16 +61,13 @@ async def train_note_model():
 async def predict_note(data: NotePredictionData):
     if not is_note_model_trained:
         raise HTTPException(status_code=400, detail="Modèle non entraîné.")
-    
-    ville_mapping = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[data.ville]
-    
-    # Convertir la ville en minuscule et enlever les espaces blancs pour uniformiser
+
     ville_clean = data.ville.strip().lower()
-    
-    # Vérification si la ville est présente dans le mapping
+    ville_mapping = {'paris': 0, 'lyon': 1, 'marseille': 2}
+
     if ville_clean not in ville_mapping:
         raise HTTPException(status_code=400, detail=f"Ville '{data.ville}' non supportée.")
-    
+
     ville_encoded = ville_mapping[ville_clean]
     X_new = np.array([[data.surface, data.prix, ville_encoded]])
     
@@ -82,13 +92,20 @@ async def train_year_model():
 async def predict_year(data: YearPredictionData):
     if not is_year_model_trained:
         raise HTTPException(status_code=400, detail="Modèle non entraîné.")
-    
+
     ville_clean = data.ville.strip().lower()
-    ville_mapping = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[ville_clean]
+    ville_mapping = {'paris': 0, 'lyon': 1, 'marseille': 2}
 
     X_new = np.array([[ville_mapping]])
+    if ville_clean not in ville_mapping:
+        raise HTTPException(status_code=400, detail=f"Ville '{data.ville}' non supportée.")
+
+    ville_encoded = ville_mapping[ville_clean]
+    X_new = np.array([[ville_encoded]])
     predicted_year = year_model.predict(X_new)[0]
+
     return {"predicted_year": predicted_year}
+
 
 # Entraînement du modèle de prédiction du garage
 @app.post("/train-garage")
@@ -107,7 +124,14 @@ async def train_garage_model():
 async def predict_garage(data: GaragePredictionData):
     if not is_garage_model_trained:
         raise HTTPException(status_code=400, detail="Modèle non entraîné.")
-    ville_encoded = {'Paris': 0, 'Lyon': 1, 'Marseille': 2}[data.ville]
+
+    ville_clean = data.ville.strip().lower()
+    ville_mapping = {'paris': 0, 'lyon': 1, 'marseille': 2}
+
+    if ville_clean not in ville_mapping:
+        raise HTTPException(status_code=400, detail=f"Ville '{data.ville}' non supportée.")
+
+    ville_encoded = ville_mapping[ville_clean]
     X_new = np.array([[data.prix, ville_encoded]])
     has_garage = garage_model.predict(X_new)[0]
     return {"has_garage": bool(has_garage)}
