@@ -78,7 +78,18 @@ onMounted(() => {
 </script>
 <template>
   <section class="container px-4 mx-auto mt-10">
-    <h2 class="text-lg font-medium text-gray-800 dark:text-white">Liste des biens</h2>
+    <div class="flex justify-between">
+      <h2 class="text-lg font-medium text-gray-800 dark:text-white">Liste des biens</h2>
+
+      <a @click="openModal"
+         class="group flex items-center px-3 py-2 cursor-pointer text-sm font-medium text-white transition-all duration-200 bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-md hover:shadow-lg">
+        <span class="mr-2">Ajouter un bien</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"
+             class="transition-transform duration-200 group-hover:rotate-90">
+          <path d="M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z"></path>
+        </svg>
+      </a>
+    </div>
 
     <div class="flex flex-col mt-6">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -116,16 +127,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="flex justify-end mt-6">
-      <a @click="openModal"
-         class="group flex items-center px-3 py-2 cursor-pointer text-sm font-medium text-white transition-all duration-200 bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-md hover:shadow-lg">
-        <span class="mr-2">Ajouter un bien</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256"
-             class="transition-transform duration-200 group-hover:rotate-90">
-          <path d="M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z"></path>
-        </svg>
-      </a>
-    </div>
   </section>
 
   <!--  MODAL-->
